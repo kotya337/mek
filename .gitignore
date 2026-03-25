@@ -1,0 +1,22 @@
+# Node
+node_modules/
+.npm/
+npm-debug.log
+
+# Build
+dist/
+build/
+*.apk
+*.aab
+
+# Environment
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

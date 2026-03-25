@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-mek-bg text-mek-text antialiased font-sans;
+  }
+}
+
+@layer components {
+  .mek-card {
+    @apply rounded-card bg-white shadow-mek-card-md border border-gray-100;
+  }
+
+  .mek-input {
+    @apply w-full rounded-btn border border-gray-300 bg-white px-3 py-2.5 text-mek-text outline-none transition-shadow
+      placeholder:text-gray-400
+      focus:border-mek-accent focus:ring-2 focus:ring-mek-accent/20;
+  }
+
+  .mek-select {
+    @apply w-full rounded-btn border border-gray-300 bg-white px-3 py-2.5 text-mek-text outline-none
+      focus:border-mek-accent focus:ring-2 focus:ring-mek-accent/20;
+  }
+
+  .mek-btn-primary {
+    @apply inline-flex items-center justify-center rounded-btn bg-mek px-4 py-2.5 text-sm font-semibold text-white shadow-mek-card
+      transition hover:bg-mek-dark focus:outline-none focus:ring-2 focus:ring-mek-accent/40 disabled:opacity-60 disabled:pointer-events-none;
+  }
+
+  .mek-btn-secondary {
+    @apply inline-flex items-center justify-center rounded-btn border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-mek-text shadow-sm
+      transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-mek-accent/25;
+  }
+
+  .mek-btn-accent {
+    @apply inline-flex items-center justify-center rounded-btn bg-mek-accent px-4 py-2.5 text-sm font-semibold text-white shadow-mek-card
+      transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-mek-accent/40 disabled:opacity-60;
+  }
+
+  .mek-page-title {
+    @apply text-2xl font-bold text-mek-text tracking-tight;
+  }
+}
