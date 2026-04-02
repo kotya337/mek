@@ -1,5 +1,5 @@
 const express = require('express');
-const { authMiddleware, requireTeacher } = require('../middleware/auth');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 const { all, get, run } = require('../db/db');
 
 function createScheduleRouter(db) {
@@ -50,6 +50,16 @@ function createScheduleRouter(db) {
            ORDER BY s.day_of_week, s.lesson_number, g.name`,
           [id]
         );
+      } else if (role === 'zavuch') {
+        rows = await all(
+          db,
+          `SELECT s.id, s.day_of_week, s.lesson_number, s.room,
+                  sub.name AS subject_name, g.name AS group_name, g.id AS group_id
+           FROM schedule s
+           JOIN subjects sub ON sub.id = s.subject_id
+           JOIN groups g ON g.id = s.group_id
+           ORDER BY s.day_of_week, s.lesson_number, g.name`
+        );
       } else {
         return res.status(403).json({ error: 'Недостаточно прав' });
       }
@@ -60,7 +70,7 @@ function createScheduleRouter(db) {
     }
   });
 
-  router.post('/', authMiddleware, requireTeacher, async (req, res) => {
+  router.post('/', authMiddleware, requireRole('zavuch'), async (req, res) => {
     try {
       const teacherId = req.user.id;
       const { group_id, subject_id, day_of_week, lesson_number, room } = req.body || {};
@@ -109,20 +119,16 @@ function createScheduleRouter(db) {
     }
   });
 
-  router.delete('/:id', authMiddleware, requireTeacher, async (req, res) => {
+  router.delete('/:id', authMiddleware, requireRole('zavuch'), async (req, res) => {
     try {
-      const teacherId = req.user.id;
       const id = Number(req.params.id);
       if (!Number.isInteger(id) || id < 1) {
         return res.status(400).json({ error: 'Некорректный идентификатор' });
       }
 
-      const row = await get(db, 'SELECT id, teacher_id FROM schedule WHERE id = ?', [id]);
+      const row = await get(db, 'SELECT id FROM schedule WHERE id = ?', [id]);
       if (!row) {
         return res.status(404).json({ error: 'Пара не найдена' });
-      }
-      if (Number(row.teacher_id) !== Number(teacherId)) {
-        return res.status(403).json({ error: 'Можно удалять только свои пары' });
       }
 
       await run(db, 'DELETE FROM schedule WHERE id = ?', [id]);

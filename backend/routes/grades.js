@@ -143,7 +143,7 @@ function createGradesRouter(db) {
         return res.json(rows);
       }
 
-      if (role === 'teacher') {
+      if (role === 'teacher' || role === 'zavuch') {
         if (!groupId) {
           return res.status(400).json({ error: 'Укажите group_id' });
         }
@@ -171,7 +171,7 @@ function createGradesRouter(db) {
     }
   });
 
-  router.post('/', authMiddleware, requireRole('teacher'), async (req, res) => {
+  router.post('/', authMiddleware, requireRole('teacher', 'zavuch'), async (req, res) => {
     try {
       const { student_id, subject_id, assignment_id, grade, date } = req.body || {};
       if (!student_id || !subject_id || grade == null) {

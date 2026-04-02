@@ -5,7 +5,7 @@ const { all } = require('../db/db');
 function createStudentsRouter(db) {
   const router = express.Router();
 
-  router.get('/', authMiddleware, requireRole('teacher'), async (req, res) => {
+  router.get('/', authMiddleware, requireRole('teacher', 'zavuch'), async (req, res) => {
     try {
       const groupId = req.query.group_id;
       if (!groupId) {

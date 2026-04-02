@@ -81,7 +81,7 @@ export default function Login() {
           </Link>
         </p>
         <p className="text-xs text-gray-400 mt-6 text-center leading-relaxed">
-          Тест: sidorov@mek.ru / password123 (студент), ivanov@mek.ru / password123 (преподаватель)
+          Тест: sidorov@mek.ru / password123 (студент), ivanov@mek.ru / password123 (преподаватель), zavuch@mek.ru / password123 (завуч)
         </p>
       </div>
     </div>

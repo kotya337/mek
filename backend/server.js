@@ -11,6 +11,7 @@ const { createGradesRouter } = require('./routes/grades');
 const { createAssignmentsRouter, UPLOADS_DIR } = require('./routes/assignments');
 const { createStudentsRouter } = require('./routes/students');
 const { createNotificationsRouter } = require('./routes/notifications');
+const { createZavuchRouter } = require('./routes/zavuch');
 const { authMiddleware } = require('./middleware/auth');
 const { all } = require('./db/db');
 
@@ -39,6 +40,7 @@ async function start() {
   app.use('/api/grades', createGradesRouter(db));
   app.use('/api/assignments', createAssignmentsRouter(db));
   app.use('/api/students', createStudentsRouter(db));
+  app.use('/api/zavuch', createZavuchRouter(db));
   app.use('/api/notifications', createNotificationsRouter(db));
 
   app.get('/api/subjects', authMiddleware, async (req, res) => {

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import client from '../api/client';
 import ScheduleTable from '../components/ScheduleTable';
 import { DAY_LABELS, DAYS_ORDER_PN_VS } from '../constants/scheduleDays';
+import { useAuthStore } from '../store/authStore';
 
 const tabs = [
   { id: 'day', label: 'День' },
@@ -15,6 +16,7 @@ export default function Schedule({ variant }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('week');
   const [selectedDay, setSelectedDay] = useState(1);
+  const userRole = useAuthStore((s) => s.role);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +66,7 @@ export default function Schedule({ variant }) {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="mek-page-title">Расписание</h1>
-        {variant === 'teacher' && (
+        {variant === 'teacher' && userRole === 'zavuch' && (
           <Link to="/teacher?tab=schedule" className="mek-btn-primary text-sm">
             Редактировать
           </Link>

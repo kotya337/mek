@@ -4,11 +4,14 @@ import axios from 'axios';
 import client from '../api/client';
 import ScheduleEditor from '../components/ScheduleEditor';
 import GradeFormModal from '../components/GradeFormModal';
+import { useAuthStore } from '../store/authStore';
 
 export default function TeacherDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const [mainTab, setMainTab] = useState(tabParam === 'schedule' ? 'schedule' : 'home');
+  const userRole = useAuthStore((s) => s.role);
+  const canEditSchedule = userRole === 'zavuch';
+  const [mainTab, setMainTab] = useState(canEditSchedule && tabParam === 'schedule' ? 'schedule' : 'home');
   const [groups, setGroups] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [journalGroupId, setJournalGroupId] = useState('');
@@ -19,18 +22,17 @@ export default function TeacherDashboard() {
   const [gradeModalOpen, setGradeModalOpen] = useState(false);
 
   useEffect(() => {
-    if (tabParam === 'schedule') {
+    if (canEditSchedule && tabParam === 'schedule') {
       setMainTab('schedule');
+      return;
     }
-  }, [tabParam]);
+    setMainTab('home');
+  }, [tabParam, canEditSchedule]);
 
   const setTab = (t) => {
     setMainTab(t);
-    if (t === 'schedule') {
-      setSearchParams({ tab: 'schedule' });
-    } else {
-      setSearchParams({});
-    }
+    if (t === 'schedule' && canEditSchedule) setSearchParams({ tab: 'schedule' });
+    else setSearchParams({});
   };
 
   useEffect(() => {
@@ -76,6 +78,71 @@ export default function TeacherDashboard() {
       active ? 'bg-mek text-white shadow-mek-card' : 'bg-white text-mek-text border border-gray-200 hover:border-mek-accent/40'
     }`;
 
+  const [manageMsg, setManageMsg] = useState('');
+  const [subjectName, setSubjectName] = useState('');
+  const [newStudent, setNewStudent] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    group_id: '',
+  });
+  const [newTeacher, setNewTeacher] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+  });
+
+  useEffect(() => {
+    if (!canEditSchedule) return;
+    if (!groups.length) return;
+    setNewStudent((s) => ({ ...s, group_id: s.group_id || String(groups[0].id) }));
+  }, [groups, canEditSchedule]);
+
+  const createSubject = async (e) => {
+    e.preventDefault();
+    setManageMsg('');
+    try {
+      await client.post('/zavuch/subjects', { name: subjectName });
+      setSubjectName('');
+      setManageMsg('Предмет создан');
+    } catch (err) {
+      setManageMsg(err.response?.data?.error || 'Ошибка создания предмета');
+    }
+  };
+
+  const createStudent = async (e) => {
+    e.preventDefault();
+    setManageMsg('');
+    try {
+      await client.post('/zavuch/students', {
+        email: newStudent.email,
+        password: newStudent.password,
+        full_name: newStudent.full_name,
+        group_id: Number(newStudent.group_id),
+      });
+      setNewStudent({ email: '', password: '', full_name: '', group_id: String(groups[0]?.id || '') });
+      setManageMsg('Студент создан');
+    } catch (err) {
+      setManageMsg(err.response?.data?.error || 'Ошибка создания студента');
+    }
+  };
+
+  const createTeacher = async (e) => {
+    e.preventDefault();
+    setManageMsg('');
+    try {
+      await client.post('/zavuch/teachers', {
+        email: newTeacher.email,
+        password: newTeacher.password,
+        full_name: newTeacher.full_name,
+      });
+      setNewTeacher({ email: '', password: '', full_name: '' });
+      setManageMsg('Преподаватель создан');
+    } catch (err) {
+      setManageMsg(err.response?.data?.error || 'Ошибка создания преподавателя');
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -87,13 +154,136 @@ export default function TeacherDashboard() {
         <button type="button" onClick={() => setTab('home')} className={tabBtn(mainTab === 'home')}>
           Главная
         </button>
-        <button type="button" onClick={() => setTab('schedule')} className={tabBtn(mainTab === 'schedule')}>
-          Редактировать расписание
-        </button>
+        {canEditSchedule && (
+          <button type="button" onClick={() => setTab('schedule')} className={tabBtn(mainTab === 'schedule')}>
+            Редактировать расписание
+          </button>
+        )}
+        {canEditSchedule && (
+          <button type="button" onClick={() => setMainTab('manage')} className={tabBtn(mainTab === 'manage')}>
+            Управление
+          </button>
+        )}
       </div>
 
       {mainTab === 'schedule' ? (
         <ScheduleEditor />
+      ) : mainTab === 'manage' && canEditSchedule ? (
+        <div className="space-y-8">
+          <section className="mek-card p-6 shadow-mek-card-md">
+            <h2 className="text-lg font-semibold text-mek-text mb-4">Создать предмет</h2>
+            <form onSubmit={createSubject} className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[240px]">
+                <label className="block text-sm font-medium text-mek-text mb-1.5">Название предмета</label>
+                <input
+                  value={subjectName}
+                  onChange={(e) => setSubjectName(e.target.value)}
+                  className="mek-input"
+                  placeholder="Напр. Информатика"
+                  required
+                />
+              </div>
+              <button type="submit" className="mek-btn-primary w-full sm:w-auto">
+                Создать
+              </button>
+            </form>
+          </section>
+
+          <section className="mek-card p-6 shadow-mek-card-md">
+            <h2 className="text-lg font-semibold text-mek-text mb-4">Добавить студента</h2>
+            <form onSubmit={createStudent} className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-mek-text mb-1.5">Email</label>
+                <input
+                  value={newStudent.email}
+                  onChange={(e) => setNewStudent((s) => ({ ...s, email: e.target.value }))}
+                  className="mek-input"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-mek-text mb-1.5">Пароль</label>
+                <input
+                  value={newStudent.password}
+                  onChange={(e) => setNewStudent((s) => ({ ...s, password: e.target.value }))}
+                  className="mek-input"
+                  required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-mek-text mb-1.5">ФИО</label>
+                <input
+                  value={newStudent.full_name}
+                  onChange={(e) => setNewStudent((s) => ({ ...s, full_name: e.target.value }))}
+                  className="mek-input"
+                  required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-mek-text mb-1.5">Группа</label>
+                <select
+                  value={newStudent.group_id}
+                  onChange={(e) => setNewStudent((s) => ({ ...s, group_id: e.target.value }))}
+                  className="mek-select"
+                  required
+                >
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="sm:col-span-2">
+                <button type="submit" className="mek-btn-primary w-full">
+                  Добавить
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="mek-card p-6 shadow-mek-card-md">
+            <h2 className="text-lg font-semibold text-mek-text mb-4">Добавить преподавателя</h2>
+            <form onSubmit={createTeacher} className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-mek-text mb-1.5">Email</label>
+                <input
+                  value={newTeacher.email}
+                  onChange={(e) => setNewTeacher((s) => ({ ...s, email: e.target.value }))}
+                  className="mek-input"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-mek-text mb-1.5">Пароль</label>
+                <input
+                  value={newTeacher.password}
+                  onChange={(e) => setNewTeacher((s) => ({ ...s, password: e.target.value }))}
+                  className="mek-input"
+                  required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-mek-text mb-1.5">ФИО</label>
+                <input
+                  value={newTeacher.full_name}
+                  onChange={(e) => setNewTeacher((s) => ({ ...s, full_name: e.target.value }))}
+                  className="mek-input"
+                  required
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <button type="submit" className="mek-btn-primary w-full">
+                  Добавить
+                </button>
+              </div>
+            </form>
+          </section>
+
+          {manageMsg && (
+            <p className="text-sm text-gray-700 bg-white border border-gray-200 rounded-btn px-3 py-2">{manageMsg}</p>
+          )}
+        </div>
       ) : (
         <>
           <section>

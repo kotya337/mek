@@ -99,7 +99,7 @@ function createAssignmentsRouter(db) {
         return res.json(rows);
       }
 
-      if (role === 'teacher') {
+      if (role === 'teacher' || role === 'zavuch') {
         const filterGroup = qGroup ? 'WHERE a.group_id = ?' : '';
         const params = qGroup ? [qGroup] : [];
         const rows = await all(
@@ -169,7 +169,7 @@ function createAssignmentsRouter(db) {
     }
   });
 
-  router.post('/', authMiddleware, requireRole('teacher'), uploadMiddleware, async (req, res) => {
+  router.post('/', authMiddleware, requireRole('teacher', 'zavuch'), uploadMiddleware, async (req, res) => {
     try {
       const subject_id = req.body.subject_id;
       const group_id = req.body.group_id;

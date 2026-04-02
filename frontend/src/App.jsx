@@ -18,10 +18,11 @@ function RequireAuth({ children }) {
   return children;
 }
 
-function RequireRole({ role, children }) {
+function RequireRole({ role, roles, children }) {
   const userRole = useAuthStore((s) => s.role);
-  if (userRole !== role) {
-    return <Navigate to={userRole === 'teacher' ? '/teacher' : '/student'} replace />;
+  const allowed = roles || (role ? [role] : []);
+  if (!allowed.includes(userRole)) {
+    return <Navigate to={userRole === 'student' ? '/student' : '/teacher'} replace />;
   }
   return children;
 }
@@ -52,7 +53,7 @@ export default function App() {
         path="/teacher"
         element={
           <RequireAuth>
-            <RequireRole role="teacher">
+            <RequireRole roles={['teacher', 'zavuch']}>
               <Layout variant="teacher" />
             </RequireRole>
           </RequireAuth>
